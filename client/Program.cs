@@ -4,6 +4,7 @@ using Oci.Common.Auth;
 using Oci.GenerativeaiagentruntimeService;
 using Oci.GenerativeaiagentruntimeService.Models;
 using Oci.GenerativeaiagentruntimeService.Requests;
+using Oci.GenerativeaiagentruntimeService.Responses;
 
 internal class Program
 {
@@ -12,7 +13,6 @@ internal class Program
     private static async Task Main(string[] args)
     {
         Logger logger = LogManager.GetCurrentClassLogger();
-
         logger.Info("Starting GenAI example");
         GenerativeAiAgentRuntimeClient? client = null;
 
@@ -27,8 +27,6 @@ internal class Program
             };
             using (client = new GenerativeAiAgentRuntimeClient(provider, clientConfiguration))
             {
-
-
                 while (true)
                 {
                     Console.WriteLine("Enter your message (or type 'exit' to quit):");
@@ -55,13 +53,22 @@ internal class Program
 
         static async Task ChatWithAgent(GenerativeAiAgentRuntimeClient client, Logger logger, string message)
         {
-            var sessionResponse = await client.CreateSession(new CreateSessionRequest()
+            CreateSessionResponse sessionResponse = null;
+            
+            try
             {
-                AgentEndpointId = AgentEndpointId,
-                CreateSessionDetails = new CreateSessionDetails()
-            });
-
-
+                sessionResponse = await client.CreateSession(new CreateSessionRequest()
+                {
+                    AgentEndpointId = AgentEndpointId,
+                    CreateSessionDetails = new CreateSessionDetails()
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error creating session. Pls try logging in again.");
+                return;
+            }
+            
             var request = new ChatRequest
             {
                 AgentEndpointId = AgentEndpointId,
@@ -95,6 +102,10 @@ internal class Program
                                     Console.WriteLine(trace.Output);
                                 if (!string.IsNullOrWhiteSpace(trace?.Generation))
                                     Console.WriteLine(trace.Generation);
+                                if ((trace?.Citations?.Any()).GetValueOrDefault())
+                                    foreach (var c in trace.Citations.Where(x => !string.IsNullOrWhiteSpace(x.Title)))
+                                        Console.Write(string.Concat("\t Relevant information located at: ", c.Title, " - pages: ", string.Join(',', c.PageNumbers), "\n"));
+
                             }
                         }
                     }

@@ -11,6 +11,8 @@ oci os object put -bn $bucketname --name tuono-owners-manual.pdf --file .\upload
 
 #oci os object list --bucket-name $bucketname
 
+#docs: https://www.oracle.com/artificial-intelligence/generative-ai/agents/
+
 #create knowledge base
 $knowledgebaseId=oci generative-ai-agent knowledge-base create-default-kb --compartment-id $compartmentId
 
